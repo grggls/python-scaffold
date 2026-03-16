@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""Bootstrap script to rename the scaffold project.
+
+Replaces all occurrences of 'myproject' with a user-chosen name across
+all files and directories. Run once after cloning the scaffold.
+
+Usage:
+    python scripts/bootstrap.py <project_name>
+
+Example:
+    python scripts/bootstrap.py my_awesome_app
+"""
+
+from __future__ import annotations
+
+import argparse
+import shutil
+import sys
+from pathlib import Path
+
+SKIP_DIRS = {".git", "__pycache__", ".venv", "venv", "node_modules", ".mypy_cache", ".ruff_cache"}
+SKIP_FILES = {"bootstrap.py"}
+
+REPLACEMENTS = [
+    ("myproject", None),  # snake_case — replacement computed from input
+    ("MyProject", None),  # PascalCase
+    ("MYPROJECT", None),  # UPPER_CASE
+]
+
+
+def to_pascal_case(name: str) -> str:
+    """Convert snake_case to PascalCase."""
+    return "".join(word.capitalize() for word in name.split("_"))
+
+
+def is_text_file(path: Path) -> bool:
+    """Check if a file is a text file by attempting UTF-8 decode."""
+    try:
+        path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, PermissionError):
+        return False
+    return True
+
+
+def validate_name(name: str) -> str:
+    """Validate that the project name is a valid Python identifier."""
+    if not name.isidentifier():
+        print(f"Error: '{name}' is not a valid Python identifier.")
+        if "-" in name:
+            suggestion = name.replace("-", "_")
+            print(f"Hint: Try '{suggestion}' (use underscores, not hyphens).")
+        sys.exit(1)
+
+    if name == "myproject":
+        print("Error: Project name cannot be 'myproject' (that's the placeholder).")
+        sys.exit(1)
+
+    return name
+
+
+def find_project_root() -> Path:
+    """Find the project root by looking for pyproject.toml."""
+    current = Path(__file__).resolve().parent
+    while current != current.parent:
+        if (current / "pyproject.toml").exists():
+            return current
+        current = current.parent
+
+    print("Error: Could not find pyproject.toml. Run from within the project.")
+    sys.exit(1)
+
+
+def should_skip(path: Path) -> bool:
+    """Check if a path should be skipped."""
+    parts = path.parts
+    for skip_dir in SKIP_DIRS:
+        if skip_dir in parts:
+            return True
+    if path.name in SKIP_FILES:
+        return True
+    return False
+
+
+def rename_in_file(path: Path, replacements: list[tuple[str, str]]) -> bool:
+    """Replace text in a file. Returns True if changes were made."""
+    if not is_text_file(path):
+        return False
+
+    content = path.read_text(encoding="utf-8")
+    original = content
+
+    for old, new in replacements:
+        content = content.replace(old, new)
+
+    if content != original:
+        path.write_text(content, encoding="utf-8")
+        return True
+    return False
+
+
+def main() -> int:
+    """Run the bootstrap process."""
+    parser = argparse.ArgumentParser(
+        description="Rename the scaffold project to your chosen name.",
+        epilog="Example: python scripts/bootstrap.py my_awesome_app",
+    )
+    parser.add_argument(
+        "name",
+        nargs="?",
+        help="New project name (must be a valid Python identifier, e.g., my_app)",
+    )
+    args = parser.parse_args()
+
+    if args.name is None:
+        name = input("Enter project name (snake_case, e.g., my_app): ").strip()
+    else:
+        name = args.name
+
+    name = validate_name(name)
+    pascal_name = to_pascal_case(name)
+    upper_name = name.upper()
+
+    author_name = input("Author name (e.g., Jane Smith): ").strip() or "Your Name"
+    author_email = input("Author email (e.g., jane@example.com): ").strip() or "you@example.com"
+
+    replacements: list[tuple[str, str]] = [
+        ("myproject", name),
+        ("MyProject", pascal_name),
+        ("MYPROJECT", upper_name),
+        ("Your Name", author_name),
+        ("you@example.com", author_email),
+    ]
+
+    root = find_project_root()
+    print(f"\nRenaming project: myproject -> {name}")
+    print(f"  PascalCase: MyProject -> {pascal_name}")
+    print(f"  UPPER_CASE: MYPROJECT -> {upper_name}")
+    print(f"  Author:     Your Name <you@example.com> -> {author_name} <{author_email}>")
+    print(f"  Root: {root}\n")
+
+    # Rename directory first
+    src_dir = root / "src" / "myproject"
+    new_src_dir = root / "src" / name
+    dirs_renamed: list[str] = []
+
+    if src_dir.exists():
+        shutil.move(str(src_dir), str(new_src_dir))
+        dirs_renamed.append(f"  src/myproject/ -> src/{name}/")
+        print(f"Renamed directory: src/myproject/ -> src/{name}/")
+
+    # Replace in all text files
+    files_modified: list[str] = []
+
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if should_skip(path):
+            continue
+
+        relative = path.relative_to(root)
+        if rename_in_file(path, replacements):
+            files_modified.append(f"  {relative}")
+
+    # Summary
+    print(f"\nDirectories renamed: {len(dirs_renamed)}")
+    for d in dirs_renamed:
+        print(d)
+
+    print(f"\nFiles modified: {len(files_modified)}")
+    for f in files_modified:
+        print(f)
+
+    # Offer to self-delete
+    print()
+    response = input("Remove bootstrap script? [Y/n] ").strip().lower()
+    if response in ("", "y", "yes"):
+        script_path = Path(__file__).resolve()
+        script_dir = script_path.parent
+
+        script_path.unlink()
+        print(f"Deleted: {script_path.relative_to(root)}")
+
+        # Remove scripts/ if empty
+        remaining = list(script_dir.iterdir())
+        if not remaining:
+            script_dir.rmdir()
+            print(f"Deleted empty directory: {script_dir.relative_to(root)}/")
+
+    print(
+        "\nNext steps:\n"
+        "  1. rm -rf .git && git init\n"
+        "  2. uv sync --extra dev\n"
+        "  3. uv run pre-commit install\n"
+        "  4. make check\n"
+        '  5. git add . && git commit -m "Initial commit"\n'
+    )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
