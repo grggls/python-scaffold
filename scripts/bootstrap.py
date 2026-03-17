@@ -14,6 +14,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -165,6 +166,21 @@ def main() -> int:
         relative = path.relative_to(root)
         if rename_in_file(path, replacements):
             files_modified.append(f"  {relative}")
+
+    # Fix CLI command name in pyproject.toml if a separate CLI name was provided
+    # (e.g., make new PROJECT=my-app sets SCAFFOLD_CLI_NAME=my-app while name=my_app)
+    cli_name = os.environ.get("SCAFFOLD_CLI_NAME", "")
+    if cli_name and cli_name != name:
+        pyproject = root / "pyproject.toml"
+        if pyproject.exists():
+            content = pyproject.read_text(encoding="utf-8")
+            # Replace the script entry key to use the hyphenated CLI name
+            old_script = f'{name} = "{name}.main:main"'
+            new_script = f'{cli_name} = "{name}.main:main"'
+            if old_script in content:
+                content = content.replace(old_script, new_script)
+                pyproject.write_text(content, encoding="utf-8")
+                print(f"CLI command: {cli_name} (from SCAFFOLD_CLI_NAME)")
 
     # Summary
     print(f"\nDirectories renamed: {len(dirs_renamed)}")
