@@ -67,7 +67,8 @@ This single command:
 3. Runs the bootstrap renamer (converts hyphens to underscores for Python)
 4. Initializes a fresh git repo with an initial commit
 5. Creates a public GitHub repo and pushes
-6. Configures branch protection on `main` (PRs required, no force push)
+6. Installs dev dependencies and pre-commit hooks (`make dev`)
+7. Configures branch protection on `main` (PRs required, no force push)
 
 The bootstrap step prompts for author name, email, and GitHub username — press Enter to accept the defaults.
 
