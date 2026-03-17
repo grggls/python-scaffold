@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
     settings = get_settings()
-    logging.basicConfig(level=settings.log_level)
+    logging.basicConfig(level=settings.log_level, force=True)
 
     if args.verbose:
         print(f"{settings.app_name} v{__version__} (debug={settings.debug})")

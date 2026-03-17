@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import FrozenInstanceError
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given
@@ -84,3 +86,11 @@ class TestConfig:
         """Property-based test: Settings should accept any string as app_name."""
         settings = Settings(app_name=name)
         assert settings.app_name == name
+
+    @given(value=st.text(alphabet=st.characters(blacklist_characters="\x00")))
+    def test_debug_truthy_parsing(self, value: str) -> None:
+        """Property-based test: DEBUG only truthy for 'true', '1', 'yes' (case-insensitive)."""
+        with patch.dict(os.environ, {"DEBUG": value}):
+            settings = get_settings()
+        expected = value.lower() in ("true", "1", "yes")
+        assert settings.debug is expected

@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := help
-.PHONY: help install dev test test-cov lint format format-check typecheck check audit clean build docker-build docker-run docs-serve docs-build bootstrap
+.PHONY: help install dev test test-cov lint format format-check typecheck check audit clean build docker-build docker-run docs-serve docs-build bootstrap new
+
+unexport VIRTUAL_ENV
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -59,3 +61,38 @@ docs-build: ## Build static documentation site
 
 bootstrap: ## Rename project (one-time after cloning scaffold)
 	python scripts/bootstrap.py
+
+new: ## Create new project from scaffold: make new PROJECT=my_app [PARENT=..]
+ifndef PROJECT
+	$(error PROJECT is required. Usage: make new PROJECT=my_app)
+endif
+	$(eval PARENT ?= ..)
+	$(eval PYNAME := $(subst -,_,$(PROJECT)))
+	$(eval DEST := $(PARENT)/$(PROJECT))
+	@if [ -d "$(DEST)" ]; then echo "Error: $(DEST) already exists"; exit 1; fi
+	git clone git@github.com:grggls/python-scaffold.git "$(DEST)"
+	cd "$(DEST)" && rm -rf .git
+	cd "$(DEST)" && python scripts/bootstrap.py "$(PYNAME)"
+	cd "$(DEST)" && git init && git add . && git commit -m "Initial commit from python-scaffold"
+	cd "$(DEST)" && gh repo create grggls/$(PROJECT) --private --source=. --remote=origin --push
+	@echo "Configuring branch protection for main..."
+	gh api repos/grggls/$(PROJECT)/branches/main/protection \
+		--method PUT \
+		--field 'required_pull_request_reviews[required_approving_review_count]=0' \
+		--field 'required_pull_request_reviews[dismiss_stale_reviews]=true' \
+		--field 'enforce_admins=true' \
+		--field 'required_linear_history=true' \
+		--field 'allow_force_pushes=false' \
+		--field 'allow_deletions=false' \
+		--field 'restrictions=null' \
+		--field 'required_status_checks=null' \
+		> /dev/null
+	@echo "Branch protection enabled on main."
+	@echo ""
+	@echo "Project created: $(DEST)"
+	@echo "GitHub repo:     https://github.com/grggls/$(PROJECT)"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  cd $(DEST)"
+	@echo "  make dev"
+	@echo "  make check"

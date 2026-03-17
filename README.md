@@ -5,20 +5,34 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-A Python project.
+A Python project scaffold with strict quality gates, 100% test coverage, and one-command project creation.
 
-## Installation
+## Quick Start
+
+Create a new project from this scaffold:
+
+```bash
+make new PROJECT=my_app
+```
+
+This clones the scaffold, runs the bootstrap renamer, initializes a git repo, creates a private GitHub repo, pushes, and configures branch protection — all in one step.
+
+## Manual Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/grggls/myproject.git
-cd myproject
+git clone https://github.com/grggls/python-scaffold.git my_app
+cd my_app
+rm -rf .git
+
+# Rename the scaffold to your project name
+python scripts/bootstrap.py my_app
+
+# Initialize and push
+git init && git add . && git commit -m "Initial commit"
 
 # Install dependencies
-uv sync --extra dev
-
-# Set up pre-commit hooks
-uv run pre-commit install
+make dev
 ```
 
 ## Usage
