@@ -9,7 +9,7 @@ description = "A Python project."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "Gregory Damiani", email = "gregory.damiani@gmail.com" }]
 dependencies = []
 
 [project.scripts]
@@ -61,7 +61,7 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 80
+fail_under = 100
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",

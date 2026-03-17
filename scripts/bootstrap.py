@@ -120,16 +120,18 @@ def main() -> int:
     pascal_name = to_pascal_case(name)
     upper_name = name.upper()
 
-    author_name = input("Author name (e.g., Jane Smith): ").strip() or "Your Name"
-    author_email = input("Author email (e.g., jane@example.com): ").strip() or "you@example.com"
-    github_username = input("GitHub username (e.g., janedoe): ").strip() or "YOUR_GITHUB_USERNAME"
+    author_name = input("Author name (e.g., Jane Smith): ").strip() or "Gregory Damiani"
+    author_email = (
+        input("Author email (e.g., jane@example.com): ").strip() or "gregory.damiani@gmail.com"
+    )
+    github_username = input("GitHub username (e.g., janedoe): ").strip() or "grggls"
 
     replacements: list[tuple[str, str]] = [
         ("myproject", name),
         ("MyProject", pascal_name),
         ("MYPROJECT", upper_name),
-        ("Your Name", author_name),
-        ("you@example.com", author_email),
+        ("Gregory Damiani", author_name),
+        ("gregory.damiani@gmail.com", author_email),
         ("grggls", github_username),
     ]
 
@@ -137,7 +139,7 @@ def main() -> int:
     print(f"\nRenaming project: myproject -> {name}")
     print(f"  PascalCase: MyProject -> {pascal_name}")
     print(f"  UPPER_CASE: MYPROJECT -> {upper_name}")
-    print(f"  Author:     Your Name <you@example.com> -> {author_name} <{author_email}>")
+    print(f"  Author:     {author_name} <{author_email}>")
     print(f"  GitHub:     grggls -> {github_username}")
     print(f"  Root: {root}\n")
 
