@@ -3,6 +3,8 @@
 import os
 from dataclasses import dataclass
 
+VALID_LOG_LEVELS: frozenset[str] = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -11,6 +13,13 @@ class Settings:
     app_name: str = "myproject"
     debug: bool = False
     log_level: str = "INFO"
+
+    def __post_init__(self) -> None:
+        if self.log_level not in VALID_LOG_LEVELS:
+            raise ValueError(
+                f"Invalid LOG_LEVEL '{self.log_level}'. "
+                f"Must be one of: {', '.join(sorted(VALID_LOG_LEVELS))}"
+            )
 
 
 def get_settings() -> Settings:

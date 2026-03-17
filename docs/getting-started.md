@@ -59,8 +59,8 @@ apt install direnv     # Debian/Ubuntu
 git clone <scaffold-repo-url> my-new-project
 cd my-new-project
 
-# 2. Rename the project
-python scripts/bootstrap.py my_new_project
+# 2. Rename the project (prompts for name, author, email, GitHub username)
+python scripts/bootstrap.py
 
 # 3. Initialize fresh git history
 rm -rf .git
@@ -143,6 +143,11 @@ Loads application settings from environment variables using stdlib `dataclasses`
 `@dataclass(frozen=True)` decorator makes settings immutable after creation, preventing
 accidental modification at runtime.
 
+`__post_init__` validates `LOG_LEVEL` against the set of known Python logging levels
+(`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). An invalid value raises `ValueError`
+with a clear message at startup rather than failing silently or crashing deep in the logging
+machinery.
+
 Uses stdlib instead of pydantic-settings to keep the scaffold at zero runtime dependencies.
 To upgrade to pydantic-settings later:
 
@@ -183,6 +188,15 @@ configuration file maps these files to the navigation structure.
 
 A stdlib-only Python script that renames `myproject` to your chosen project name across all
 files and directories. Run once after cloning the scaffold, then optionally delete it.
+
+It prompts for four values:
+
+| Prompt | Replaces | Example |
+| --- | --- | --- |
+| Project name | `myproject` / `MyProject` / `MYPROJECT` | `my_app` |
+| Author name | `Your Name` | `Jane Smith` |
+| Author email | `you@example.com` | `jane@example.com` |
+| GitHub username | `grggls` | `janedoe` |
 
 ### `.claude/` — Claude Code Configuration
 
@@ -578,7 +592,6 @@ Excludes unnecessary files from the Docker build context:
 
 Development environment with:
 
-- Volume mount (`./src:/app/src`) for live code changes without rebuilding
 - Environment file (`.env`) for local configuration
 - Commented-out examples for PostgreSQL and Redis — uncomment when needed
 
@@ -608,16 +621,19 @@ Triggers on:
 
 ### Three-Job Pipeline
 
-**Job 1 — `quality`**: Fast checks that catch most issues:
+Both `quality` and `test` jobs run a **Python 3.12 × 3.13 matrix**, ensuring the code works
+on all supported interpreter versions.
+
+**Job 1 — `quality`** (matrix: 3.12, 3.13): Fast checks that catch most issues:
 
 - Lint (`ruff check`) — including S (security) and B (bugbear) rules
 - Format verification (`ruff format --check`)
 - Type checking (`mypy src/`)
 
-**Job 2 — `test`** (depends on `quality`): Only runs if quality passes:
+**Job 2 — `test`** (matrix: 3.12, 3.13; depends on `quality`): Only runs if quality passes:
 
 - Full test suite with coverage (`pytest --cov`)
-- Coverage report uploaded to Codecov
+- Coverage report uploaded to Codecov (3.12 only, to avoid duplicate uploads)
 
 **Job 3 — `security`** (runs independently): Security-specific checks:
 
@@ -627,6 +643,20 @@ Triggers on:
 The pipeline is split into three jobs. Quality checks are fast (~5 seconds) and catch most
 issues. Tests only run when code quality is verified. Security scans run independently so
 they are never skipped even if tests fail.
+
+### Release Pipeline (`.github/workflows/release.yml`)
+
+Triggers on a version tag push (`v*.*.*`). Runs the full quality gate, builds the wheel and
+sdist via `uv build`, then publishes to PyPI using
+[trusted publishing](https://docs.pypi.org/trusted-publishers/) (OIDC — no API token
+needed). Requires a `release` GitHub Actions environment configured in repository settings.
+
+To release:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ### Dependabot (`.github/dependabot.yml`)
 

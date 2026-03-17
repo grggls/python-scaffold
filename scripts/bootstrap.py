@@ -122,6 +122,7 @@ def main() -> int:
 
     author_name = input("Author name (e.g., Jane Smith): ").strip() or "Your Name"
     author_email = input("Author email (e.g., jane@example.com): ").strip() or "you@example.com"
+    github_username = input("GitHub username (e.g., janedoe): ").strip() or "YOUR_GITHUB_USERNAME"
 
     replacements: list[tuple[str, str]] = [
         ("myproject", name),
@@ -129,6 +130,7 @@ def main() -> int:
         ("MYPROJECT", upper_name),
         ("Your Name", author_name),
         ("you@example.com", author_email),
+        ("grggls", github_username),
     ]
 
     root = find_project_root()
@@ -136,6 +138,7 @@ def main() -> int:
     print(f"  PascalCase: MyProject -> {pascal_name}")
     print(f"  UPPER_CASE: MYPROJECT -> {upper_name}")
     print(f"  Author:     Your Name <you@example.com> -> {author_name} <{author_email}>")
+    print(f"  GitHub:     grggls -> {github_username}")
     print(f"  Root: {root}\n")
 
     # Rename directory first

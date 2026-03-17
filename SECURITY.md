@@ -4,7 +4,7 @@
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, email the maintainers directly at: **you@example.com**
+Instead, email the maintainers directly at: **[gregory.damiani@gmail.com](mailto:gregory.damiani@gmail.com)**
 
 Include the following in your report:
 

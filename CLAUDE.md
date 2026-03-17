@@ -1,7 +1,7 @@
 # myproject
 
 ## Project Overview
-Python project using src/ layout, managed with uv, Python 3.12+.
+Python scaffold using src/ layout, managed with uv, targeting Python 3.12 and 3.13.
 
 ## Validation Loop
 After ANY code change, run this sequence. All must pass before a task is complete:
@@ -18,9 +18,11 @@ Shortcut: `make check` runs all four.
 - `make dev` — full development setup
 - `make format` — auto-format code
 - `make clean` — remove generated files
+- `make audit` — dependency CVE scan
 
 ## Conventions
-- Python 3.12 minimum, strict mypy, ruff for lint/format
+
+- Python 3.12 and 3.13 supported, strict mypy, ruff for lint/format
 - src/ layout: source in `src/myproject/`, tests in `tests/`
 - All functions must have type annotations and return types
 - All modules must have docstrings
@@ -28,13 +30,21 @@ Shortcut: `make check` runs all four.
 - Feature branches, conventional commits
 - Line length: 100 characters
 - Double quotes for strings
+- 100% test coverage maintained
+
+## Testing Conventions
+
+- Use `pytest.raises()` for expected exceptions — never bare try/except in tests
+- Use the `monkeypatch` fixture for env var overrides — never `os.environ` direct assignment
+- Use `pytest.CaptureFixture[str]` for `capsys` type annotation
+- Add Hypothesis `@given` tests for any function accepting arbitrary user input
 
 ## Security Conventions
 - Never hardcode secrets, API keys, or passwords — use environment variables
 - Use `secrets` module for cryptographic randomness (not `random`)
 - Never use `eval()`, `exec()`, or `pickle` with untrusted data
 - Never disable SSL/TLS certificate verification
-- Validate and sanitize all external input
+- Validate and sanitize all external input — see `Settings.__post_init__` for the pattern
 - Log errors but never log secrets or PII
 - Run `make audit` to check dependencies for known vulnerabilities
 
@@ -42,10 +52,14 @@ Shortcut: `make check` runs all four.
 - `src/myproject/` — package source code
 - `tests/` — pytest test suite
 - `docs/` — MkDocs documentation
-- `scripts/` — utility scripts
+- `scripts/` — utility scripts (bootstrap.py is one-time setup, delete after use)
+- `.github/workflows/` — CI (ci.yml), release (release.yml)
+- `.github/ISSUE_TEMPLATE/` — bug and feature request templates
+- `.github/pull_request_template.md` — PR checklist
+- `CONTRIBUTING.md` — contribution guide
 - `.claude/commands/` — Claude Code slash commands
 
 ## Dependencies
 - Managed via uv (`pyproject.toml`)
-- Dev tools: ruff, mypy, pytest, pytest-cov, pytest-randomly, hypothesis, pip-audit, pre-commit, mkdocs-material, mkdocstrings
+- Dev tools: ruff>=0.15, mypy>=1.14, pytest, pytest-cov, pytest-randomly, hypothesis, pip-audit, pre-commit, mkdocs-material, mkdocstrings
 - Zero runtime dependencies by default

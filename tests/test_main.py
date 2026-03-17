@@ -40,6 +40,11 @@ class TestMain:
         assert main(["--verbose"]) == 0
         assert "myproject" in capsys.readouterr().out
 
+    def test_invalid_flag(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            main(["--unknown"])
+        assert exc_info.value.code == 2
+
 
 class TestConfig:
     """Configuration tests."""
@@ -68,6 +73,11 @@ class TestConfig:
         assert settings.app_name == "myproject-test"
         assert settings.debug is True
         assert settings.log_level == "DEBUG"
+
+    def test_invalid_log_level(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("LOG_LEVEL", "INVALID")
+        with pytest.raises(ValueError, match="Invalid LOG_LEVEL"):
+            get_settings()
 
     @given(st.text())
     def test_settings_app_name_accepts_any_string(self, name: str) -> None:

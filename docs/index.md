@@ -4,13 +4,14 @@ A Python project.
 
 ## Features
 
-- Modern Python 3.12+ with strict type checking
+- Modern Python 3.12 and 3.13 with strict type checking
 - Managed with [uv](https://docs.astral.sh/uv/) for fast, reliable dependency management
 - Code quality enforced by [Ruff](https://docs.astral.sh/ruff/) and [mypy](https://mypy-lang.org/)
-- Tested with [pytest](https://docs.pytest.org/) and coverage reporting
+- Tested with [pytest](https://docs.pytest.org/), property-based testing via Hypothesis, and 100% coverage
 - Pre-commit hooks for automated quality gates
-- Docker support with multi-stage builds
-- CI/CD via GitHub Actions
+- Docker support with multi-stage builds and functional HEALTHCHECK
+- CI/CD via GitHub Actions — quality, test, security, and release pipelines
+- GitHub issue templates, PR template, and CONTRIBUTING guide
 - Documentation powered by [MkDocs Material](https://squidfunk.github.io/mkdocs-material/)
 
 ## Quick Start
