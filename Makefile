@@ -75,6 +75,7 @@ endif
 	cd "$(DEST)" && SCAFFOLD_CLI_NAME="$(PROJECT)" python scripts/bootstrap.py "$(PYNAME)"
 	cd "$(DEST)" && git init && git add . && git commit -m "Initial commit from python-scaffold"
 	cd "$(DEST)" && gh repo create grggls/$(PROJECT) --public --source=. --remote=origin --push
+	cd "$(DEST)" && $(MAKE) dev
 	@echo "Configuring branch protection for main..."
 	gh api repos/grggls/$(PROJECT)/branches/main/protection \
 		--method PUT \
@@ -94,5 +95,4 @@ endif
 	@echo ""
 	@echo "Next steps:"
 	@echo "  cd $(DEST)"
-	@echo "  make dev"
 	@echo "  make check"

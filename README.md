@@ -1,6 +1,6 @@
-# myproject
+# python-scaffold
 
-[![CI](https://github.com/grggls/myproject/actions/workflows/ci.yml/badge.svg)](https://github.com/grggls/myproject/actions/workflows/ci.yml)
+[![CI](https://github.com/grggls/python-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/grggls/python-scaffold/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -15,7 +15,7 @@ Create a new project from this scaffold:
 make new PROJECT=my_app
 ```
 
-This clones the scaffold, runs the bootstrap renamer, initializes a git repo, creates a private GitHub repo, pushes, and configures branch protection — all in one step.
+This clones the scaffold, runs the bootstrap renamer, initializes a git repo, creates a public GitHub repo, pushes, and configures branch protection — all in one step.
 
 ## Manual Setup
 
@@ -67,7 +67,7 @@ make help
 ## Project Structure
 
 ```
-myproject/
+python-scaffold/
 ├── src/myproject/       # Package source code
 │   ├── __init__.py      # Package version
 │   ├── config.py        # Configuration from environment

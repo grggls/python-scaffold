@@ -87,7 +87,11 @@ class TestConfig:
         settings = Settings(app_name=name)
         assert settings.app_name == name
 
-    @given(value=st.text(alphabet=st.characters(blacklist_characters="\x00")))
+    @given(
+        value=st.text(
+            alphabet=st.characters(blacklist_categories=("Cs",), blacklist_characters="\x00"),
+        ),
+    )
     def test_debug_truthy_parsing(self, value: str) -> None:
         """Property-based test: DEBUG only truthy for 'true', '1', 'yes' (case-insensitive)."""
         with patch.dict(os.environ, {"DEBUG": value}):
