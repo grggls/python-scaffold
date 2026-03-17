@@ -52,32 +52,46 @@ apt install direnv     # Debian/Ubuntu
 
 ## Quick Start
 
-### From the Scaffold Template
+### One-Command Setup (Recommended)
+
+From an existing clone of the scaffold:
+
+```bash
+make new PROJECT=my_app
+```
+
+This single command:
+
+1. Clones the scaffold into `../my_app/`
+2. Removes the scaffold's git history
+3. Runs the bootstrap renamer (converts hyphens to underscores for Python)
+4. Initializes a fresh git repo with an initial commit
+5. Creates a public GitHub repo and pushes
+6. Configures branch protection on `main` (PRs required, no force push)
+
+The bootstrap step prompts for author name, email, and GitHub username — press Enter to accept the defaults.
+
+### Manual Setup
 
 ```bash
 # 1. Clone the scaffold
-git clone <scaffold-repo-url> my-new-project
-cd my-new-project
+git clone https://github.com/grggls/python-scaffold.git my_app
+cd my_app
+rm -rf .git
 
 # 2. Rename the project (prompts for name, author, email, GitHub username)
-python scripts/bootstrap.py
+python scripts/bootstrap.py my_app
 
-# 3. Initialize fresh git history
-rm -rf .git
+# 3. Initialize and commit
 git init
-
-# 4. Install development dependencies
-uv sync --extra dev
-
-# 5. Set up pre-commit hooks
-uv run pre-commit install
-
-# 6. Verify everything works
-make check
-
-# 7. Create initial commit
 git add .
 git commit -m "Initial commit"
+
+# 4. Install development dependencies
+make dev
+
+# 5. Verify everything works
+make check
 ```
 
 ### Day-to-Day Development
@@ -189,14 +203,14 @@ configuration file maps these files to the navigation structure.
 A stdlib-only Python script that renames `myproject` to your chosen project name across all
 files and directories. Run once after cloning the scaffold, then optionally delete it.
 
-It prompts for four values:
+It prompts for four values (defaults shown in brackets):
 
-| Prompt | Replaces | Example |
+| Prompt | Default | Replaces |
 | --- | --- | --- |
-| Project name | `myproject` / `MyProject` / `MYPROJECT` | `my_app` |
-| Author name | `Your Name` | `Jane Smith` |
-| Author email | `you@example.com` | `jane@example.com` |
-| GitHub username | `grggls` | `janedoe` |
+| Project name | *(required)* | `myproject` / `MyProject` / `MYPROJECT` |
+| Author name | `Gregory Damiani` | Author in `pyproject.toml` and docs |
+| Author email | `gregory.damiani@gmail.com` | Email in `pyproject.toml` and docs |
+| GitHub username | `grggls` | GitHub references in URLs and badges |
 
 ### `.claude/` — Claude Code Configuration
 
@@ -376,7 +390,7 @@ branch = true
 ```toml
 [tool.coverage.report]
 show_missing = true
-fail_under = 80
+fail_under = 100
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
@@ -385,8 +399,8 @@ exclude_lines = [
 ```
 
 - **show_missing = true**: Shows exact line numbers that lack test coverage
-- **fail_under = 80**: The test suite fails if coverage drops below 80%. This prevents
-  gradual erosion of test coverage over time.
+- **fail_under = 100**: The test suite fails if coverage drops below 100%. This ensures
+  every line and branch is tested.
 - **exclude_lines**: Lines matching these patterns are excluded from coverage measurement:
     - `pragma: no cover`: Explicit opt-out for specific lines
     - `if TYPE_CHECKING:`: Import blocks only used by type checkers, never executed at
@@ -419,6 +433,7 @@ Run `make help` to see all available targets. Every target is documented below.
 | `make docs-build` | `uv run mkdocs build` | Build static documentation site into `site/` |
 | `make audit` | `uv run pip-audit` | Scan dependencies for known vulnerabilities (CVEs) |
 | `make bootstrap` | `python scripts/bootstrap.py` | Rename project after cloning scaffold (one-time) |
+| `make new` | clone + bootstrap + git init + gh repo create | Create a new project from the scaffold in one step. Usage: `make new PROJECT=my_app` |
 
 ### Typical Development Workflow
 
@@ -980,7 +995,7 @@ if a CI step is compromised.
 
 #### Pinned Action Versions
 
-All GitHub Actions are pinned to specific major versions (e.g., `@v4`, `@v5`) rather than
+All GitHub Actions are pinned to specific major versions (e.g., `@v6`, `@v7`) rather than
 `@latest`. This prevents supply chain attacks where a compromised action version is deployed.
 
 #### Three-Tier Pipeline
@@ -1052,13 +1067,13 @@ supported versions. See the file for details.
 - **Easy upgrade path**: Changing `@dataclass` to `class Settings(BaseSettings)` is a
   minimal refactor
 
-### Why 80% Coverage Threshold
+### Why 100% Coverage Threshold
 
-- **High enough** to catch most regressions and ensure meaningful test coverage
-- **Low enough** to avoid requiring tests for trivial code (property access, string
-  formatting)
-- **Industry standard**: 80% is the most common threshold in professional codebases
-- **Adjustable**: Change `fail_under` in `pyproject.toml` to tighten or relax
+- **Complete confidence**: Every line and branch is tested — no untested code paths
+- **Prevents coverage erosion**: New code must include tests, no exceptions
+- **Achievable with exclusions**: `if __name__` guards and `TYPE_CHECKING` blocks are
+  excluded since they cannot meaningfully be tested
+- **Adjustable**: Change `fail_under` in `pyproject.toml` to relax if needed
 
 ### Why `uv.lock` is Committed
 
