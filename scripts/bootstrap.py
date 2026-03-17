@@ -120,11 +120,11 @@ def main() -> int:
     pascal_name = to_pascal_case(name)
     upper_name = name.upper()
 
-    author_name = input("Author name (e.g., Jane Smith): ").strip() or "Gregory Damiani"
+    author_name = input("Author name [Gregory Damiani]: ").strip() or "Gregory Damiani"
     author_email = (
-        input("Author email (e.g., jane@example.com): ").strip() or "gregory.damiani@gmail.com"
+        input("Author email [gregory.damiani@gmail.com]: ").strip() or "gregory.damiani@gmail.com"
     )
-    github_username = input("GitHub username (e.g., janedoe): ").strip() or "grggls"
+    github_username = input("GitHub username [grggls]: ").strip() or "grggls"
 
     replacements: list[tuple[str, str]] = [
         ("myproject", name),
@@ -193,11 +193,10 @@ def main() -> int:
 
     print(
         "\nNext steps:\n"
-        "  1. rm -rf .git && git init\n"
-        "  2. uv sync --extra dev\n"
-        "  3. uv run pre-commit install\n"
-        "  4. make check\n"
-        '  5. git add . && git commit -m "Initial commit"\n'
+        "  1. git init\n"
+        "  2. make dev\n"
+        "  3. make check\n"
+        '  4. git add . && git commit -m "Initial commit"\n'
     )
 
     return 0
