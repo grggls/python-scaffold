@@ -127,7 +127,10 @@ def main() -> int:
     )
     github_username = input("GitHub username [grggls]: ").strip() or "grggls"
 
+    cli_name = os.environ.get("SCAFFOLD_CLI_NAME", name)
+
     replacements: list[tuple[str, str]] = [
+        ("python-scaffold", cli_name),
         ("myproject", name),
         ("MyProject", pascal_name),
         ("MYPROJECT", upper_name),
@@ -167,10 +170,9 @@ def main() -> int:
         if rename_in_file(path, replacements):
             files_modified.append(f"  {relative}")
 
-    # Fix CLI command name in pyproject.toml if a separate CLI name was provided
+    # Fix CLI command name in pyproject.toml if it differs from the Python name
     # (e.g., make new PROJECT=my-app sets SCAFFOLD_CLI_NAME=my-app while name=my_app)
-    cli_name = os.environ.get("SCAFFOLD_CLI_NAME", "")
-    if cli_name and cli_name != name:
+    if cli_name != name:
         pyproject = root / "pyproject.toml"
         if pyproject.exists():
             content = pyproject.read_text(encoding="utf-8")
