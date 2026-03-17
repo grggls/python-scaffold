@@ -72,7 +72,7 @@ endif
 	@if [ -d "$(DEST)" ]; then echo "Error: $(DEST) already exists"; exit 1; fi
 	git clone git@github.com:grggls/python-scaffold.git "$(DEST)"
 	cd "$(DEST)" && rm -rf .git
-	cd "$(DEST)" && python scripts/bootstrap.py "$(PYNAME)"
+	cd "$(DEST)" && SCAFFOLD_CLI_NAME="$(PROJECT)" python scripts/bootstrap.py "$(PYNAME)"
 	cd "$(DEST)" && git init && git add . && git commit -m "Initial commit from python-scaffold"
 	cd "$(DEST)" && gh repo create grggls/$(PROJECT) --public --source=. --remote=origin --push
 	@echo "Configuring branch protection for main..."
