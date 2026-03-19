@@ -10,7 +10,7 @@ install: ## Install production dependencies
 	uv sync
 
 dev: ## Set up full development environment
-	uv sync --extra dev
+	uv sync
 	uv run pre-commit install
 
 test: ## Run tests
