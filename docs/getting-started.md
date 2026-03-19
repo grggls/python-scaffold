@@ -70,7 +70,18 @@ This single command:
 6. Installs dev dependencies and pre-commit hooks (`make dev`)
 7. Configures branch protection on `main` (PRs required, no force push)
 
-The bootstrap step prompts for author name, email, and GitHub username — press Enter to accept the defaults.
+The bootstrap step prompts for author name, email, and GitHub username — press Enter to accept the defaults. You can also skip all prompts by setting environment variables:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `SCAFFOLD_AUTHOR_NAME` | `Gregory Damiani` | Author name in `pyproject.toml` and docs |
+| `SCAFFOLD_AUTHOR_EMAIL` | `gregory.damiani@gmail.com` | Email in `pyproject.toml` and docs |
+| `SCAFFOLD_GITHUB_USERNAME` | `grggls` | GitHub username in URLs and badges |
+| `SCAFFOLD_REMOVE_BOOTSTRAP` | *(prompts)* | Set to `y` to auto-delete `scripts/bootstrap.py` |
+
+`make new` automatically sets `SCAFFOLD_REMOVE_BOOTSTRAP=y`, so the bootstrap script always self-deletes when creating a project with `make new`.
+
+After bootstrap runs it also removes scaffold-specific content from the new project: `tests/test_bootstrap.py`, `.claude/commands/bootstrap.md`, the `make bootstrap` and `make new` Makefile targets, and scaffold-oriented sections of `CLAUDE.md`, `README.md`, and `docs/getting-started.md`.
 
 ### Manual Setup
 

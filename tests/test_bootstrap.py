@@ -97,3 +97,112 @@ class TestRenameInFile:
         f.write_bytes(b"\x00\x01\x02\xff\xfe")
         result = bootstrap.rename_in_file(f, [("myproject", "newapp")])
         assert result is False
+
+
+def _make_scaffold_tree(root: Path) -> None:
+    """Create a minimal scaffold directory tree for cleanup tests."""
+    (root / "pyproject.toml").write_text("[project]\nname = 'myproject'\n", encoding="utf-8")
+    tests = root / "tests"
+    tests.mkdir()
+    (tests / "test_bootstrap.py").write_text("# scaffold test\n", encoding="utf-8")
+    commands = root / ".claude" / "commands"
+    commands.mkdir(parents=True)
+    (commands / "bootstrap.md").write_text("# bootstrap\n", encoding="utf-8")
+    (root / "Makefile").write_text(
+        ".PHONY: help install bootstrap new\n\n"
+        "help:\n\techo help\n\n"
+        "install:\n\tuv sync\n\n"
+        "bootstrap: ## Rename project\n\tpython scripts/bootstrap.py\n\n"
+        "new: ## Create new project\n\techo new\n",
+        encoding="utf-8",
+    )
+    (root / "CLAUDE.md").write_text(
+        "# myproject\n\n"
+        "- `scripts/` — utility scripts (bootstrap.py is one-time setup, delete after use)\n"
+        "- Other config\n",
+        encoding="utf-8",
+    )
+    (root / "README.md").write_text(
+        "# myproject\n\n"
+        "## Quick Start\n\nmake new PROJECT=my_app\n\n"
+        "## Manual Setup\n\npython scripts/bootstrap.py\n\n"
+        "## Usage\n\nuv run myproject\n",
+        encoding="utf-8",
+    )
+    docs = root / "docs"
+    docs.mkdir()
+    (docs / "getting-started.md").write_text(
+        "## Quick Start\n\n### One-Command Setup\n\nmake new PROJECT=my_app\n\n"
+        "### Manual Setup\n\npython scripts/bootstrap.py\n\n"
+        "---\n\n## Project Structure\n\n"
+        "### `scripts/bootstrap.py` — One-Time Rename Tool\n\nSome text.\n\n"
+        "### `.claude/` — Claude Code Configuration\n\nSome text.\n\n"
+        "| `make bootstrap` | python scripts/bootstrap.py | one-time |\n"
+        "| `make new` | clone + bootstrap | scaffold |\n"
+        "| `/bootstrap` | Guides you | scaffold |\n",
+        encoding="utf-8",
+    )
+
+
+class TestCleanupScaffold:
+    """Tests for cleanup_scaffold — removes scaffold-specific files and references."""
+
+    def test_deletes_test_bootstrap(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        assert not (tmp_path / "tests" / "test_bootstrap.py").exists()
+
+    def test_deletes_bootstrap_command(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        assert not (tmp_path / ".claude" / "commands" / "bootstrap.md").exists()
+
+    def test_removes_bootstrap_target_from_makefile(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "Makefile").read_text(encoding="utf-8")
+        assert "bootstrap" not in content
+
+    def test_removes_new_target_from_makefile(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "Makefile").read_text(encoding="utf-8")
+        assert "new:" not in content
+
+    def test_preserves_other_makefile_targets(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "Makefile").read_text(encoding="utf-8")
+        assert "help" in content
+        assert "install" in content
+
+    def test_removes_bootstrap_from_claude_md(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "bootstrap" not in content
+        assert "Other config" in content  # non-bootstrap content preserved
+
+    def test_replaces_readme_quick_start(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert "make new" not in content
+        assert "bootstrap" not in content
+        assert "make dev" in content
+        assert "make check" in content
+        assert "## Usage" in content  # section after Quick Start preserved
+
+    def test_cleans_getting_started(self, tmp_path: Path) -> None:
+        _make_scaffold_tree(tmp_path)
+        bootstrap.cleanup_scaffold(tmp_path)
+        content = (tmp_path / "docs" / "getting-started.md").read_text(encoding="utf-8")
+        assert "bootstrap" not in content
+        assert "make new" not in content
+        assert "## Project Structure" in content  # structure section preserved
+        assert ".claude/" in content  # .claude section preserved
+
+    def test_tolerates_missing_optional_files(self, tmp_path: Path) -> None:
+        """cleanup_scaffold should not raise when scaffold files are already absent."""
+        (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")
+        bootstrap.cleanup_scaffold(tmp_path)  # must not raise
