@@ -100,6 +100,88 @@ def rename_in_file(path: Path, replacements: list[tuple[str, str]]) -> bool:
     return False
 
 
+def cleanup_scaffold(root: Path) -> None:
+    """Remove scaffold-specific files and references from a newly created project."""
+    # Delete test_bootstrap.py — scaffold test, not relevant to new project
+    test_bootstrap = root / "tests" / "test_bootstrap.py"
+    if test_bootstrap.exists():
+        test_bootstrap.unlink()
+        print("  Deleted: tests/test_bootstrap.py")
+
+    # Delete .claude/commands/bootstrap.md — scaffold-only Claude command
+    bootstrap_cmd = root / ".claude" / "commands" / "bootstrap.md"
+    if bootstrap_cmd.exists():
+        bootstrap_cmd.unlink()
+        print("  Deleted: .claude/commands/bootstrap.md")
+
+    # Remove scaffold-specific targets from Makefile
+    makefile = root / "Makefile"
+    if makefile.exists():
+        mk = makefile.read_text(encoding="utf-8")
+        # Remove bootstrap target block (target line + tab-indented recipe lines)
+        mk = re.sub(r"^bootstrap:.*\n(?:\t[^\n]*\n)+", "", mk, flags=re.MULTILINE)
+        # Remove new target block — it spans to end of file (last target)
+        mk = re.sub(r"\nnew:.*$", "", mk, flags=re.DOTALL)
+        # Remove bootstrap and new from the .PHONY declaration
+        mk = re.sub(r"(\.PHONY:[^\n]*)\s+bootstrap\b", r"\1", mk)
+        mk = re.sub(r"(\.PHONY:[^\n]*)\s+new\b", r"\1", mk)
+        makefile.write_text(mk, encoding="utf-8")
+        print("  Updated: Makefile (removed bootstrap and new targets)")
+
+    # Remove bootstrap.py reference from CLAUDE.md
+    claude_md = root / "CLAUDE.md"
+    if claude_md.exists():
+        cm = claude_md.read_text(encoding="utf-8")
+        cm = re.sub(r"- `scripts/`[^\n]*bootstrap[^\n]*\n", "", cm)
+        claude_md.write_text(cm, encoding="utf-8")
+        print("  Updated: CLAUDE.md (removed bootstrap.py reference)")
+
+    # Fix README.md — remove scaffold-specific Quick Start and Manual Setup
+    readme = root / "README.md"
+    if readme.exists():
+        rm = readme.read_text(encoding="utf-8")
+        rm = re.sub(
+            r"## Quick Start\n.*?(?=## Usage\n)",
+            "## Quick Start\n\n```bash\nmake dev\nmake check\n```\n\n",
+            rm,
+            flags=re.DOTALL,
+        )
+        readme.write_text(rm, encoding="utf-8")
+        print("  Updated: README.md (removed scaffold-specific sections)")
+
+    # Fix docs/getting-started.md — remove bootstrap-specific content
+    docs_gs = root / "docs" / "getting-started.md"
+    if docs_gs.exists():
+        gs = docs_gs.read_text(encoding="utf-8")
+        # Replace the scaffold-specific "Quick Start" section with project dev workflow
+        gs = re.sub(
+            r"## Quick Start\n.*?(?=---\n\n## Project Structure)",
+            (
+                "## Quick Start\n\n```bash\n"
+                "# Install dependencies\nmake dev\n\n"
+                "# Verify everything works\nmake check\n```\n\n"
+                "---\n\n## Project Structure"
+            ),
+            gs,
+            flags=re.DOTALL,
+        )
+        # Remove the scripts/bootstrap.py section from Project Structure
+        gs = re.sub(
+            r"### `scripts/bootstrap\.py`.*?(?=### `\.claude/`)",
+            "",
+            gs,
+            flags=re.DOTALL,
+        )
+        # Remove bootstrap row from make command reference table
+        gs = re.sub(r"\| `make bootstrap`[^\n]*\n", "", gs)
+        # Remove make new row from make command reference table (scaffold-specific)
+        gs = re.sub(r"\| `make new`[^\n]*\n", "", gs)
+        # Remove /bootstrap from Claude commands table
+        gs = re.sub(r"\| `/bootstrap`[^\n]*\n", "", gs)
+        docs_gs.write_text(gs, encoding="utf-8")
+        print("  Updated: docs/getting-started.md (removed bootstrap references)")
+
+
 def main() -> int:
     """Run the bootstrap process."""
     parser = argparse.ArgumentParser(
@@ -200,86 +282,7 @@ def main() -> int:
 
     # ── Scaffold-specific cleanup ──────────────────────────────────────────
     print("\nRemoving scaffold-specific files and references...")
-
-    # Delete test_bootstrap.py — scaffold test, not relevant to new project
-    test_bootstrap = root / "tests" / "test_bootstrap.py"
-    if test_bootstrap.exists():
-        test_bootstrap.unlink()
-        print("  Deleted: tests/test_bootstrap.py")
-
-    # Delete .claude/commands/bootstrap.md — scaffold-only Claude command
-    bootstrap_cmd = root / ".claude" / "commands" / "bootstrap.md"
-    if bootstrap_cmd.exists():
-        bootstrap_cmd.unlink()
-        print("  Deleted: .claude/commands/bootstrap.md")
-
-    # Remove scaffold-specific targets from Makefile
-    makefile = root / "Makefile"
-    if makefile.exists():
-        mk = makefile.read_text(encoding="utf-8")
-        # Remove bootstrap target block (target line + tab-indented recipe lines)
-        mk = re.sub(r"^bootstrap:.*\n(?:\t[^\n]*\n)+", "", mk, flags=re.MULTILINE)
-        # Remove new target block — it spans to end of file (last target)
-        mk = re.sub(r"\nnew:.*$", "", mk, flags=re.DOTALL)
-        # Remove bootstrap and new from the .PHONY declaration
-        mk = re.sub(r"(\.PHONY:[^\n]*)\s+bootstrap\b", r"\1", mk)
-        mk = re.sub(r"(\.PHONY:[^\n]*)\s+new\b", r"\1", mk)
-        makefile.write_text(mk, encoding="utf-8")
-        print("  Updated: Makefile (removed bootstrap and new targets)")
-
-    # Remove bootstrap.py reference from CLAUDE.md
-    claude_md = root / "CLAUDE.md"
-    if claude_md.exists():
-        cm = claude_md.read_text(encoding="utf-8")
-        cm = re.sub(r"- `scripts/`[^\n]*bootstrap[^\n]*\n", "", cm)
-        claude_md.write_text(cm, encoding="utf-8")
-        print("  Updated: CLAUDE.md (removed bootstrap.py reference)")
-
-    # Fix README.md — remove scaffold-specific Quick Start and Manual Setup
-    readme = root / "README.md"
-    if readme.exists():
-        rm = readme.read_text(encoding="utf-8")
-        rm = re.sub(
-            r"## Quick Start\n.*?(?=## Usage\n)",
-            "## Quick Start\n\n```bash\nmake dev\nmake check\n```\n\n",
-            rm,
-            flags=re.DOTALL,
-        )
-        readme.write_text(rm, encoding="utf-8")
-        print("  Updated: README.md (removed scaffold-specific sections)")
-
-    # Fix docs/getting-started.md — remove bootstrap-specific content
-    docs_gs = root / "docs" / "getting-started.md"
-    if docs_gs.exists():
-        gs = docs_gs.read_text(encoding="utf-8")
-        # Replace the scaffold-specific "Quick Start" section with project dev workflow
-        gs = re.sub(
-            r"## Quick Start\n.*?(?=---\n\n## Project Structure)",
-            (
-                "## Quick Start\n\n```bash\n"
-                "# Install dependencies\nmake dev\n\n"
-                "# Verify everything works\nmake check\n```\n\n"
-                "---\n\n## Project Structure"
-            ),
-            gs,
-            flags=re.DOTALL,
-        )
-        # Remove the scripts/bootstrap.py section from Project Structure
-        gs = re.sub(
-            r"### `scripts/bootstrap\.py`.*?(?=### `\.claude/`)",
-            "",
-            gs,
-            flags=re.DOTALL,
-        )
-        # Remove bootstrap row from make command reference table
-        gs = re.sub(r"\| `make bootstrap`[^\n]*\n", "", gs)
-        # Remove make new row from make command reference table (scaffold-specific)
-        gs = re.sub(r"\| `make new`[^\n]*\n", "", gs)
-        # Remove /bootstrap from Claude commands table
-        gs = re.sub(r"\| `/bootstrap`[^\n]*\n", "", gs)
-        docs_gs.write_text(gs, encoding="utf-8")
-        print("  Updated: docs/getting-started.md (removed bootstrap references)")
-
+    cleanup_scaffold(root)
     # ── End scaffold cleanup ───────────────────────────────────────────────
 
     # Offer to self-delete
