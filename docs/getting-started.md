@@ -274,13 +274,13 @@ Maps a command name to a `module:function` path. When installed, `uv` creates an
 script in the virtualenv's `bin/` directory. The function must be callable with no required
 arguments and should return an integer exit code.
 
-### `[project.optional-dependencies]`
+### `[dependency-groups]`
 
 ```toml
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "hypothesis>=6.100",
-    "mypy>=1.10",
+    "mypy>=1.14",
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.25",
     "pip-audit>=2.7",
@@ -288,14 +288,15 @@ dev = [
     "pytest>=8.2",
     "pytest-cov>=5.0",
     "pytest-randomly>=3.15",
-    "ruff>=0.5",
+    "ruff>=0.15",
 ]
 ```
 
-Development dependencies that are not needed at runtime. Install with `uv sync --extra dev`.
-This keeps your production installation lean — users of your package never install pytest or
-ruff. Security tools (`pip-audit`, `hypothesis`, `pytest-randomly`) are included here to
-ensure they are available in every development environment.
+Development dependencies that are not needed at runtime. Defined as a uv dependency group
+(PEP 735), they are automatically included in all `uv sync` and `uv run` invocations — no
+`--extra dev` flag required. This keeps your production installation lean while ensuring dev
+tools are always available during development. Security tools (`pip-audit`, `hypothesis`,
+`pytest-randomly`) are included to ensure they are available in every development environment.
 
 ### `[tool.ruff]`
 
@@ -429,7 +430,7 @@ Run `make help` to see all available targets. Every target is documented below.
 |--------|---------|-------------|
 | `make help` | *(self-documenting)* | See all available targets with descriptions |
 | `make install` | `uv sync` | Install production dependencies only |
-| `make dev` | `uv sync --extra dev && uv run pre-commit install` | First-time setup or after changing dev dependencies |
+| `make dev` | `uv sync && uv run pre-commit install` | First-time setup or after changing dev dependencies |
 | `make test` | `uv run pytest` | Quick test run during development |
 | `make test-cov` | `uv run pytest --cov --cov-report=term-missing --cov-report=html` | Detailed coverage analysis. Opens `htmlcov/index.html` for visual report |
 | `make lint` | `uv run ruff check .` | Check for linting violations without auto-fixing |

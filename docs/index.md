@@ -22,7 +22,7 @@ git clone <repo-url> myproject
 cd myproject
 
 # Install development dependencies
-uv sync --extra dev
+uv sync
 
 # Run the project
 uv run myproject
